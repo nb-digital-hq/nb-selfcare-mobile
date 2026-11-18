@@ -1,0 +1,368 @@
+package com.nb.selfcare
+
+import android.Manifest
+import android.app.AlarmManager
+import android.content.ComponentName
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.net.Uri
+import android.os.Build
+import android.os.Bundle
+import android.os.VibrationAttributes
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.os.VibratorManager
+import android.provider.Settings
+import android.speech.SpeechRecognizer
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
+import androidx.health.connect.client.PermissionController
+import androidx.lifecycle.lifecycleScope
+import com.nb.selfcare.health.HealthConnectBridge
+import com.nb.selfcare.notifications.FastingNotifier
+import com.nb.selfcare.notifications.MovementNudgeWorker
+import com.nb.selfcare.notifications.NotificationChannels
+import com.nb.selfcare.notifications.ReminderActionReceiver
+import com.nb.selfcare.notifications.ReminderScheduler
+import com.nb.selfcare.notifications.ReminderSpec
+import io.flutter.embedding.android.FlutterFragmentActivity
+import io.flutter.embedding.engine.FlutterEngine
+import io.flutter.plugin.common.MethodCall
+import io.flutter.plugin.common.MethodChannel
+import kotlinx.coroutines.launch
+
+/**
+ * Puente nativo de NB SelfCare: Health Connect, permisos del sistema y
+ * notificaciones locales. Ningún canal habla con servidores remotos.
+ */
+class MainActivity : FlutterFragmentActivity() {
+
+    companion object {
+        private const val HEALTH_CHANNEL = "com.nb.selfcare/health_connect"
+        private const val SYSTEM_CHANNEL = "com.nb.selfcare/system"
+        private const val NOTIFICATIONS_CHANNEL = "com.nb.selfcare/notifications"
+        private const val APP_ICON_CHANNEL = "com.nb.selfcare/app_icon"
+        private const val UPDATER_CHANNEL = "com.nb.selfcare/updater"
+        private const val PKG = "com.nb.selfcare"
+    }
+
+    private var updater: AppUpdater? = null
+
+    // Cambio de ícono pendiente. Conmutar el activity-alias con la app en primer
+    // plano la cierra de golpe (se deshabilita el alias con el que se lanzó), así
+    // que se aplica en onStop, cuando la persona ya salió de la app.
+    private var pendingIconKey: String? = null
+
+
+    private lateinit var health: HealthConnectBridge
+    private var pendingHealthResult: MethodChannel.Result? = null
+
+    /** Permisos que deben quedar concedidos para responder `true` a la petición en curso. */
+    private var pendingHealthRequired: Set<String> = HealthConnectBridge.ALL_PERMISSIONS
+    private var pendingPermissionResult: MethodChannel.Result? = null
+
+    /** Acción pendiente para Flutter cuando Health Connect abre la política de privacidad. */
+    private var pendingLaunchAction: String? = null
+
+    private val healthPermissionLauncher: ActivityResultLauncher<Set<String>> =
+        registerForActivityResult(PermissionController.createRequestPermissionResultContract()) { granted ->
+            pendingHealthResult?.success(granted.containsAll(pendingHealthRequired))
+            pendingHealthResult = null
+        }
+
+    private val runtimePermissionLauncher: ActivityResultLauncher<String> =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+            pendingPermissionResult?.success(granted)
+            pendingPermissionResult = null
+        }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        captureLaunchAction(intent)
+        health = HealthConnectBridge(applicationContext)
+        NotificationChannels.ensure(applicationContext)
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        captureLaunchAction(intent)
+    }
+
+    private fun captureLaunchAction(intent: Intent?) {
+        when (intent?.action) {
+            "androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE",
+            "android.intent.action.VIEW_PERMISSION_USAGE",
+            -> pendingLaunchAction = "privacy_policy"
+        }
+    }
+
+    override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
+        super.configureFlutterEngine(flutterEngine)
+        val messenger = flutterEngine.dartExecutor.binaryMessenger
+        MethodChannel(messenger, HEALTH_CHANNEL).setMethodCallHandler(::onHealthCall)
+        MethodChannel(messenger, SYSTEM_CHANNEL).setMethodCallHandler(::onSystemCall)
+        MethodChannel(messenger, NOTIFICATIONS_CHANNEL).setMethodCallHandler(::onNotificationsCall)
+        val u = AppUpdater(this)
+        updater = u
+        MethodChannel(messenger, UPDATER_CHANNEL).setMethodCallHandler(u)
+        MethodChannel(messenger, APP_ICON_CHANNEL).setMethodCallHandler { call, result ->
+            when (call.method) {
+                "setIcon" -> {
+                    pendingIconKey = call.argument<String>("key") ?: ""
+                    result.success(true)
+                }
+                else -> result.notImplemented()
+            }
+        }
+    }
+
+    override fun onStop() {
+        applyPendingIcon()
+        super.onStop()
+    }
+
+    override fun onDestroy() {
+        updater?.dispose()
+        updater = null
+        super.onDestroy()
+    }
+
+    /** Habilita el alias del ícono elegido y deshabilita los demás. */
+    private fun applyPendingIcon() {
+        val key = pendingIconKey ?: return
+        pendingIconKey = null
+        val target = iconComponent(key)
+        val pm = packageManager
+        val aliases = runCatching {
+            pm.getPackageInfo(
+                packageName,
+                PackageManager.GET_ACTIVITIES or PackageManager.MATCH_DISABLED_COMPONENTS,
+            ).activities?.map { it.name }.orEmpty()
+        }.getOrDefault(emptyList()).filter { it.startsWith("$PKG.AppIcon") }
+        if (aliases.isNotEmpty() && target.className !in aliases) return
+        pm.setComponentEnabledSetting(
+            target,
+            PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
+            PackageManager.DONT_KILL_APP,
+        )
+        for (name in aliases) {
+            if (name == target.className) continue
+            pm.setComponentEnabledSetting(
+                ComponentName(PKG, name),
+                PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
+                PackageManager.DONT_KILL_APP,
+            )
+        }
+    }
+
+    private fun iconComponent(key: String): ComponentName =
+        ComponentName(PKG, if (key.isEmpty()) "$PKG.AppIconDefault" else "$PKG.AppIcon_$key")
+
+    private fun onHealthCall(call: MethodCall, result: MethodChannel.Result) {
+        if (!::health.isInitialized) health = HealthConnectBridge(applicationContext)
+        when (call.method) {
+            "availability" -> result.success(health.availability())
+            "hasPermissions" -> launchSafely(result) { health.hasAllPermissions() }
+            "requestPermissions" -> {
+                if (health.availability() != "available") {
+                    result.success(false)
+                    return
+                }
+                pendingHealthResult?.success(false)
+                pendingHealthResult = result
+                lifecycleScope.launch { pendingHealthRequired = health.requestPermissions(healthPermissionLauncher) }
+            }
+            "requestVitalPermissions" -> {
+                val kinds = call.argument<List<String>>("kinds") ?: emptyList()
+                if (health.availability() != "available" || kinds.isEmpty()) {
+                    result.success(false)
+                    return
+                }
+                pendingHealthResult?.success(false)
+                pendingHealthResult = result
+                pendingHealthRequired = health.requestVitalPermissions(healthPermissionLauncher, kinds)
+                if (pendingHealthRequired.isEmpty()) {
+                    pendingHealthResult = null
+                    result.success(false)
+                }
+            }
+            "readVitals" -> launchSafely(result) {
+                health.readVitals(
+                    kinds = call.argument<List<String>>("kinds") ?: emptyList(),
+                    sinceMillis = call.argument<Number>("sinceEpochMs")!!.toLong(),
+                )
+            }
+            "writeMindfulness" -> launchSafely(result) {
+                health.writeMindfulness(
+                    startMillis = call.argument<Number>("startEpochMs")!!.toLong(),
+                    endMillis = call.argument<Number>("endEpochMs")!!.toLong(),
+                    title = call.argument<String>("title") ?: "",
+                )
+            }
+            "supportsBackgroundReads" -> launchSafely(result) { health.supportsBackgroundReads() }
+            "hasBackgroundReadPermission" -> launchSafely(result) { health.hasBackgroundReadPermission() }
+            "readDailyActivity" -> launchSafely(result) {
+                health.readDailyActivity(call.argument<String>("dateKey")!!)
+            }
+            "writeWeight" -> launchSafely(result) {
+                health.writeWeight(
+                    weightKg = call.argument<Double>("weightKg")!!,
+                    bodyFatPercent = call.argument<Double>("bodyFatPercentage"),
+                    epochMillis = call.argument<Number>("timestampEpochMs")!!.toLong(),
+                    fromScale = call.argument<Boolean>("fromScale") ?: false,
+                )
+            }
+            "writeHydration" -> launchSafely(result) {
+                health.writeHydration(
+                    volumeMl = call.argument<Int>("amountMl")!!,
+                    epochMillis = call.argument<Number>("timestampEpochMs")!!.toLong(),
+                )
+            }
+            "openSettings" -> result.success(openHealthConnectSettings())
+            else -> result.notImplemented()
+        }
+    }
+
+    private fun onSystemCall(call: MethodCall, result: MethodChannel.Result) {
+        when (call.method) {
+            "checkPermission" -> result.success(isGranted(call.argument<String>("permission")!!))
+            "requestPermission" -> {
+                val permission = call.argument<String>("permission")!!
+                when {
+                    permission == Manifest.permission.SCHEDULE_EXACT_ALARM -> result.success(openExactAlarmSettings())
+                    isGranted(permission) -> result.success(true)
+                    else -> {
+                        pendingPermissionResult?.success(false)
+                        pendingPermissionResult = result
+                        runtimePermissionLauncher.launch(permission)
+                    }
+                }
+            }
+            "openAppSettings" -> result.success(openAppSettings())
+            "consumeLaunchAction" -> {
+                result.success(pendingLaunchAction)
+                pendingLaunchAction = null
+            }
+            "deviceModel" -> result.success("${Build.MANUFACTURER} ${Build.MODEL}")
+            "dial" -> result.success(
+                startSafely(Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + call.argument<String>("number")!!))),
+            )
+            "vibrate" -> {
+                vibrate(call.argument<List<Number>>("pattern")?.map { it.toLong() } ?: emptyList())
+                result.success(true)
+            }
+            "isOnDeviceSpeechAvailable" -> result.success(
+                Build.VERSION.SDK_INT >= 31 && SpeechRecognizer.isOnDeviceRecognitionAvailable(this),
+            )
+            else -> result.notImplemented()
+        }
+    }
+
+    private fun onNotificationsCall(call: MethodCall, result: MethodChannel.Result) {
+        when (call.method) {
+            "showFastingTimer" -> {
+                FastingNotifier(applicationContext).start(
+                    startedAtMillis = call.argument<Number>("startedAtEpochMs")!!.toLong(),
+                    targetHours = call.argument<Int>("targetHours")!!,
+                    protocol = call.argument<String>("protocol")!!,
+                )
+                result.success(true)
+            }
+            "cancelFastingTimer" -> {
+                FastingNotifier(applicationContext).stop()
+                result.success(true)
+            }
+            "setReminders" -> {
+                val specs = (call.argument<List<Map<*, *>>>("reminders") ?: emptyList()).map(ReminderSpec::fromMap)
+                ReminderScheduler(applicationContext).replaceAll(specs)
+                result.success(true)
+            }
+            "consumeReminderActions" -> result.success(ReminderActionReceiver.consume(applicationContext))
+            "setMovementNudges" -> {
+                if (call.argument<Boolean>("enabled") == true) {
+                    MovementNudgeWorker.enable(
+                        applicationContext,
+                        startMinutes = call.argument<Int>("startMinutes") ?: (9 * 60),
+                        endMinutes = call.argument<Int>("endMinutes") ?: (21 * 60),
+                    )
+                } else {
+                    MovementNudgeWorker.disable(applicationContext)
+                }
+                result.success(true)
+            }
+            else -> result.notImplemented()
+        }
+    }
+
+    /** Ejecuta una operación suspendida y responde siempre, aunque falle. */
+    private fun launchSafely(result: MethodChannel.Result, block: suspend () -> Any?) {
+        lifecycleScope.launch {
+            try {
+                result.success(block())
+            } catch (error: Exception) {
+                result.error("health_connect_error", error.message, null)
+            }
+        }
+    }
+
+    /** Patrón de vibración en milisegundos: espera, vibra, espera, vibra… */
+    private fun vibrate(pattern: List<Long>) {
+        if (pattern.isEmpty()) return
+        val vibrator: Vibrator? = if (Build.VERSION.SDK_INT >= 31) {
+            getSystemService(VibratorManager::class.java)?.defaultVibrator
+        } else {
+            @Suppress("DEPRECATION")
+            getSystemService(Vibrator::class.java)
+        }
+        if (vibrator?.hasVibrator() != true) return
+        val effect = VibrationEffect.createWaveform(pattern.toLongArray(), -1)
+        // Como "multimedia" y no como "táctil": la guía del suelo pélvico se nota
+        // aunque la vibración al tocar esté desactivada en el sistema.
+        if (Build.VERSION.SDK_INT >= 33) {
+            vibrator.vibrate(effect, VibrationAttributes.createForUsage(VibrationAttributes.USAGE_MEDIA))
+        } else {
+            vibrator.vibrate(effect)
+        }
+    }
+
+    private fun isGranted(permission: String): Boolean = when (permission) {
+        Manifest.permission.SCHEDULE_EXACT_ALARM ->
+            Build.VERSION.SDK_INT < 31 || getSystemService(AlarmManager::class.java)?.canScheduleExactAlarms() == true
+        Manifest.permission.POST_NOTIFICATIONS ->
+            Build.VERSION.SDK_INT < 33 || hasRuntimePermission(permission)
+        else -> hasRuntimePermission(permission)
+    }
+
+    private fun hasRuntimePermission(permission: String): Boolean =
+        ContextCompat.checkSelfPermission(this, permission) == PackageManager.PERMISSION_GRANTED
+
+    private fun openExactAlarmSettings(): Boolean {
+        if (Build.VERSION.SDK_INT < 31) return true
+        return startSafely(
+            Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM, Uri.fromParts("package", packageName, null)),
+        )
+    }
+
+    private fun openHealthConnectSettings(): Boolean {
+        val intent = if (Build.VERSION.SDK_INT >= 34) {
+            Intent("android.health.connect.action.MANAGE_HEALTH_PERMISSIONS")
+                .putExtra(Intent.EXTRA_PACKAGE_NAME, packageName)
+        } else {
+            Intent("androidx.health.ACTION_HEALTH_CONNECT_SETTINGS")
+        }
+        return startSafely(intent) || openAppSettings()
+    }
+
+    private fun openAppSettings(): Boolean = startSafely(
+        Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", packageName, null)),
+    )
+
+    private fun startSafely(intent: Intent): Boolean = try {
+        startActivity(intent)
+        true
+    } catch (_: Exception) {
+        false
+    }
+}

@@ -1,0 +1,50 @@
+name: Bug report
+description: Something does not work as it should
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        If this is a security vulnerability, **do not report it here**. Follow [SECURITY.md](../blob/main/SECURITY.md).
+        Do not include real health data (weights, medicines, symptoms) or screenshots that show them.
+  - type: textarea
+    id: observed
+    attributes:
+      label: What happens
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What should happen
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open the Food tab
+        2. Tap ...
+        3. Observe that ...
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: NB SelfCare Mobile version
+      description: Shown in Settings, About and updates.
+    validations:
+      required: true
+  - type: input
+    id: device
+    attributes:
+      label: Device and system
+      placeholder: "Pixel 8, Android 16 / iPhone 15, iOS 18"
+    validations:
+      required: true
+  - type: input
+    id: language
+    attributes:
+      label: App language and theme
+      placeholder: "English, Night Emerald"

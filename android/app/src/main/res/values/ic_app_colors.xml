@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generado por tool/gen_app_icons.py; no editar a mano. -->
+<resources>
+    <color name="ic_launcher_background">#C7393F</color>
+    <color name="ic_app_amatista_zen_bg">#C084FC</color>
+    <color name="ic_app_arcilla_nocturna_bg">#E07A52</color>
+    <color name="ic_app_atardecer_dorado_bg">#F59E0B</color>
+    <color name="ic_app_bosque_boreal_bg">#34D399</color>
+    <color name="ic_app_bronce_antiguo_bg">#D97706</color>
+    <color name="ic_app_cerezo_sakura_bg">#F472B6</color>
+    <color name="ic_app_coral_abisal_bg">#FF5E57</color>
+    <color name="ic_app_cyberpunk_neon_bg">#00F5D4</color>
+    <color name="ic_app_duna_sahara_bg">#F97316</color>
+    <color name="ic_app_hielo_artico_bg">#67E8F9</color>
+    <color name="ic_app_lavanda_calma_bg">#8452F5</color>
+    <color name="ic_app_menta_cristalina_bg">#0C855D</color>
+    <color name="ic_app_nebulosa_cosmica_bg">#818CF8</color>
+    <color name="ic_app_negro_oled_bg">#00F0B5</color>
+    <color name="ic_app_nxtpaper_color_paper_bg">#0D7490</color>
+    <color name="ic_app_nxtpaper_eink_dark_bg">#EAE6DF</color>
+    <color name="ic_app_nxtpaper_eink_light_bg">#121212</color>
+    <color name="ic_app_nxtpaper_sepia_bg">#3B2F22</color>
+    <color name="ic_app_rubi_carmesi_bg">#FB7185</color>
+    <color name="ic_app_salvia_lino_bg">#537E61</color>
+    <color name="ic_app_samsung_dark_bg">#00E5A3</color>
+    <color name="ic_app_samsung_light_bg">#008461</color>
+    <color name="ic_app_titanio_minimal_bg">#A3E635</color>
+    <color name="ic_app_zafiro_profundo_bg">#38BDF8</color>
+</resources>

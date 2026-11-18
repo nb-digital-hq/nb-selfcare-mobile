@@ -1,0 +1,22 @@
+NB SelfCare Mobile
+Copyright 2026 The NB SelfCare Mobile Authors
+
+This product includes software developed by The NB SelfCare Mobile Authors and
+by third parties. The complete list of third-party components, their copyright
+holders and their licenses is in THIRD-PARTY-NOTICES.md, generated from
+pubspec.lock and distributed with every release; see
+docs/legal/third-party-notices.md.
+
+The bundled fonts Manrope and Space Grotesk are licensed under the SIL Open
+Font License 1.1 (assets/fonts/OFL.txt). The barcode scanner includes
+zxing-cpp, licensed under the Apache License 2.0. The offline food catalogue is
+derived from USDA FoodData Central, a public-domain work of the U.S.
+Department of Agriculture. Products looked up on demand come from Open Food
+Facts under the Open Database License.
+
+Licensed under the Apache License, Version 2.0. You may obtain a copy of the
+License in the LICENSE file distributed with this work.
+
+"NB", "NB Digital", "NB SelfCare" and "NB SelfCare Mobile" are trademarks of
+the project. The Apache License does not grant permission to use the project's
+names, logos or trademarks. See TRADEMARKS.md for the trademark policy.

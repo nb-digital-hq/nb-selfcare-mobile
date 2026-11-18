@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="channel_fasting_name">Fasting timer</string>
+    <string name="channel_fasting_desc">Your ongoing fast on the lock screen.</string>
+    <string name="channel_reminders_name">Habit reminders</string>
+    <string name="channel_reminders_desc">Weigh-in, hydration, eating window and journal.</string>
+    <string name="channel_movement_name">Active breaks</string>
+    <string name="channel_movement_desc">Nudges to move after sitting for a long time.</string>
+    <string name="fasting_goal_reached">%1$d h goal reached!</string>
+    <string name="fasting_goal_today">Goal today at %1$s</string>
+    <string name="fasting_goal_tomorrow">Goal tomorrow at %1$s</string>
+    <string name="fasting_title">Fast %1$s · %2$s</string>
+    <string name="phase_digestive">Digestive phase</string>
+    <string name="phase_glycogen">Using glycogen</string>
+    <string name="phase_fat_burning">Fat burning</string>
+    <string name="phase_ketosis">Ketosis</string>
+    <string name="phase_autophagy">Autophagy</string>
+    <string name="movement_title">A 2-minute active break?</string>
+    <string name="movement_body">A quick stretch or a short walk now does your back and your energy good.</string>
+</resources>

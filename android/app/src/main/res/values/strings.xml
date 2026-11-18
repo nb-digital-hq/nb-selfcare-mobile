@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Textos del lado nativo (canales y avisos que se pintan sin pasar por Flutter).
+     Español es el idioma por defecto; values-en y values-pt los traducen. -->
+<resources>
+    <string name="channel_fasting_name">Cronómetro de ayuno</string>
+    <string name="channel_fasting_desc">Tiempo de ayuno en curso en la pantalla de bloqueo.</string>
+    <string name="channel_reminders_name">Recordatorios de hábitos</string>
+    <string name="channel_reminders_desc">Pesaje, hidratación, ventana de comidas y diario.</string>
+    <string name="channel_movement_name">Pausas activas</string>
+    <string name="channel_movement_desc">Invitaciones a moverte tras mucho tiempo sentado.</string>
+    <string name="fasting_goal_reached">¡Meta de %1$d h alcanzada!</string>
+    <string name="fasting_goal_today">Meta hoy a las %1$s</string>
+    <string name="fasting_goal_tomorrow">Meta mañana a las %1$s</string>
+    <string name="fasting_title">Ayuno %1$s · %2$s</string>
+    <string name="phase_digestive">Fase digestiva</string>
+    <string name="phase_glycogen">Usando glucógeno</string>
+    <string name="phase_fat_burning">Quema de grasa</string>
+    <string name="phase_ketosis">Cetosis</string>
+    <string name="phase_autophagy">Autofagia</string>
+    <string name="movement_title">¿Una pausa activa de 2 minutos?</string>
+    <string name="movement_body">Estirar o caminar un poco ahora le sienta genial a tu espalda y a tu energía.</string>
+</resources>

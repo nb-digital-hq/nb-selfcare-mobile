@@ -1,0 +1,24 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it using these metadata."
+title: "NB SelfCare Mobile"
+abstract: >-
+  Everyday self-care on your phone: food, water, body, fasting, sleep, medicines, habits, check-ups and
+  Nibi, a dragon that keeps you company. Everything stays on the device, with no account, no cloud and no
+  telemetry.
+type: software
+authors:
+  - name: "NB Digital"
+  - name: "The NB SelfCare Mobile Authors"
+version: "1.0.0"
+license: Apache-2.0
+repository-code: "https://github.com/nb-digital-hq/nb-selfcare-mobile"
+keywords:
+  - health
+  - self-care
+  - nutrition
+  - local-first
+  - offline
+  - privacy
+  - flutter
+  - android
+date-released: 2026-11-18
