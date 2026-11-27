@@ -1,0 +1,6 @@
+"NSCameraUsageDescription" = "Escanear códigos de barras de alimentos y tomar la foto de perfil o del diario.";
+"NSMicrophoneUsageDescription" = "Dictar comidas; el audio se reconoce en el teléfono.";
+"NSSpeechRecognitionUsageDescription" = "Convertir en texto la comida que dictas, sin conexión.";
+"NSBluetoothAlwaysUsageDescription" = "Leer el peso de tu báscula Xiaomi Mi Scale 2.";
+"NSPhotoLibraryUsageDescription" = "Elegir una foto de perfil o una foto para el diario.";
+"NSLocalNetworkUsageDescription" = "Conectar con el dispositivo SelfCare emparejado en tu red local, solo cuando habilitas la sincronización.";

@@ -1,0 +1,51 @@
+[
+  {
+    "caso": "agua",
+    "nodo": "11111111111111111111111111111111",
+    "cambio": {
+      "id": "33333333333333333333333333333333",
+      "registro": "55555555555555555555555555555555",
+      "entidad": "agua",
+      "base": 0,
+      "operacion": "guardar",
+      "datos": {
+        "mililitros": 250,
+        "dia": "2026-01-01"
+      }
+    },
+    "sha256": "fd89edb7604cbe6e9abd4b348a70c1ab4e3657257a806163412147890f1cca89"
+  },
+  {
+    "caso": "estructura_y_numeros",
+    "nodo": "11111111111111111111111111111111",
+    "cambio": {
+      "id": "33333333333333333333333333333333",
+      "registro": "55555555555555555555555555555555",
+      "entidad": "agua",
+      "base": 0,
+      "operacion": "guardar",
+      "datos": {
+        "texto": "niñez · alimentação",
+        "anidado": {
+          "": "BMP",
+          "𐀀": "fuera BMP"
+        },
+        "valores": [null, true, false, 0, -0.0, 1, 1.0, 0.1, 1e-307, 5e-324, 9007199254740991]
+      }
+    },
+    "sha256": "bb479589d78bef6e7953b69595c2b1c945c99780360dbac027475947d3b22953"
+  },
+  {
+    "caso": "borrado",
+    "nodo": "11111111111111111111111111111111",
+    "cambio": {
+      "id": "33333333333333333333333333333333",
+      "registro": "55555555555555555555555555555555",
+      "entidad": "agua",
+      "base": 4,
+      "operacion": "eliminar",
+      "datos": null
+    },
+    "sha256": "265b44164939e2ed009b6ab474a0236c7540552dcfa3569347c3c7b37bb524f2"
+  }
+]

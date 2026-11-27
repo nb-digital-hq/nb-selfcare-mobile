@@ -1,0 +1,47 @@
+/// Constantes globales del sistema NB SelfCare.
+abstract final class AppConstants {
+  /// Longitud máxima del nombre del perfil (restricción de la tabla `user_profiles`).
+  static const int maxProfileNameLength = 60;
+
+  static const String appName = 'NB SelfCare';
+
+  /// Versión publicada. `tool/guardianes/version.dart` comprueba que coincida
+  /// con `pubspec.yaml`, `CHANGELOG.md` y `CITATION.cff`.
+  static const String appVersion = '1.0.0';
+
+  // Biometría y Fisiología
+  static const double defaultEmaAlpha = 0.1;
+  static const double waterRetentionWeightDeltaKg = 0.40;
+  static const double highSodiumThresholdMg = 2500.0;
+  static const double glycogenSupercompensationFactor = 1.30;
+  static const double biaWaterShiftThresholdPercent = 0.40;
+
+  /// Hora de acostarse de referencia para la curva de cafeína.
+  static const int defaultBedtimeHour = 23;
+
+  // TDEE Adaptativo
+  static const int adaptiveTdeeWindowDays = 14;
+  static const int adaptiveTdeeMinFoodLogDays = 10;
+  static const int adaptiveTdeeMinWeighInDays = 6;
+  static const double kcalPerKgBodyFat = 7700.0;
+  static const int maxWeeklyTdeeAdjustmentKcal = 150;
+
+  // Gamificación y Mascota
+  static const String defaultPetName = 'Nibi';
+  static const int initialCoinsBalance = 50;
+  static const int initialStreakShields = 1;
+  static const double goodSleepMultiplier = 1.5;
+
+  // Monedas por acción
+  static const int coinsWeighIn = 15;
+  static const int coinsMealLog = 10;
+  static const int maxDailyMealLogCoins = 30;
+  static const int coinsWaterGoal = 15;
+  static const int coinsFastDone = 20;
+  static const int coinsWorkoutDone = 20;
+  static const int coinsJournalEntry = 10;
+
+  // Costo tienda
+  static const int costShield1Day = 40;
+  static const int costShieldWeekend = 100;
+}

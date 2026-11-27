@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="channel_fasting_name">Cronômetro de jejum</string>
+    <string name="channel_fasting_desc">Tempo de jejum em andamento na tela de bloqueio.</string>
+    <string name="channel_reminders_name">Lembretes de hábitos</string>
+    <string name="channel_reminders_desc">Pesagem, hidratação, janela de refeições e diário.</string>
+    <string name="channel_movement_name">Pausas ativas</string>
+    <string name="channel_movement_desc">Convites para se mexer depois de muito tempo sentado.</string>
+    <string name="fasting_goal_reached">Meta de %1$d h alcançada!</string>
+    <string name="fasting_goal_today">Meta hoje às %1$s</string>
+    <string name="fasting_goal_tomorrow">Meta amanhã às %1$s</string>
+    <string name="fasting_title">Jejum %1$s · %2$s</string>
+    <string name="phase_digestive">Fase digestiva</string>
+    <string name="phase_glycogen">Usando glicogênio</string>
+    <string name="phase_fat_burning">Queima de gordura</string>
+    <string name="phase_ketosis">Cetose</string>
+    <string name="phase_autophagy">Autofagia</string>
+    <string name="movement_title">Uma pausa ativa de 2 minutos?</string>
+    <string name="movement_body">Alongar ou caminhar um pouco agora faz bem para as suas costas e para a sua energia.</string>
+</resources>
